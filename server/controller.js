@@ -2,8 +2,8 @@ const dotenv =require("dotenv").config()
 const {CONNECTION_STRING} = process.env
 const Sequelize = require("sequelize")
 
-const sequelize = new Sequelize(CONNECTION_STRING,{
-    dielect: 'postgres',
+const sequelize = new Sequelize(CONNECTION_STRING, {
+    dialect: "postgres",
     dialectOptions:{
         ssl: {
             rejectUnauthorized: false
@@ -12,16 +12,33 @@ const sequelize = new Sequelize(CONNECTION_STRING,{
 })
 
 module.exports = {
+    deleteCity: (req, res) => {
+        const id = req.params.id
+
+    sequelize.query(`
+        DELETE FROM cities
+        WHERE city_id = ${id};
+        `)
+    .then((dbRes) => {
+            res.status(200).send(dbRes[0])
+    })
+    .catch((error) => {
+        console.log(error)
+        res.status(500).send("Incorrect Information!")
+    })
+},
+
     getCities: (req, res) => {
         sequelize.query(`
-        SELECT cities.city_id, 
+        SELECT 
+            cities.city_id, 
             cities.name AS city,
             cities.rating,
             countries.country_id, 
             countries.name AS country
         FROM cities
         JOIN countries
-        ON cities.country_id = countries.country_id
+        ON cities.country_id = countries.country_id;
     `)
     .then((dbRes) => {
         res.status(200).send(dbRes[0])
@@ -33,13 +50,13 @@ module.exports = {
 },
 
     createCity: (req, res) => {
-        const{name, rating, countryId} =req.body
+        const{name, rating, countryId} = req.body
         
         sequelize.query(`
         INSERT INTO cities
         (name, rating, country_id)
         VALUES
-        ('${name}', '${rating}', '${countryId}');
+        ('${name}', ${rating}, ${countryId});
         `)
         .then((dbRes) => {
             res.status(200).send(dbRes[0])
@@ -47,8 +64,8 @@ module.exports = {
         .catch((error) => {
             console.log(error)
             res.status(500).send("Incorrect Information!")
-        })
-    },
+    })
+},
 
     getCountries: (req, res) => {
         sequelize.query(`
@@ -281,6 +298,6 @@ module.exports = {
         `).then(() => {
             console.log('DB seeded!')
             res.sendStatus(200)
-        }).catch(err => console.log('error seeding DB', err))
+        }).catch(error => console.log('error seeding DB', error))
     }
 }
